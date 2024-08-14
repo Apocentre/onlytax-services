@@ -12,16 +12,18 @@ use solana_account_decoder::{
   parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig,
 };
 use solana_sdk::{
-  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction, message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction
+  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction,
+  message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
 use spl_token_2022::{
-  extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts, instruction::transfer_checked, state::Mint
+  extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts,
+  instruction::transfer_checked, state::Mint,
 };
 
-use crate::utils::config::SolanaKeypair;
+use crate::utils::config::{SolanaKeypair, SolanaPubkey};
 
 struct WithheldAccount {
   account: Pubkey,
@@ -31,23 +33,25 @@ struct WithheldAccount {
 pub struct FeeCollector {
   rpc_client: Arc<RpcClient>,
   operator_keypair: SolanaKeypair,
+  treasury: SolanaPubkey,
   protocol_fee_bps: u64,
 }
 
-// We're using extentions so the mint acount is not the classic 165 bytes account.
-// TODO: we need to dynamcally load this number since we're dealing with multiple mint accounts
-const MINT_ACCOUNT_SIZE: u64 = 346;
+// We're using extentions so the token acount is not the classic 165 bytes account.
+const TOKEN_ACCOUNT_SIZE: u64 = 346;
 const ACCOUNT_BATCH_SIZE: usize = 10;
 
 impl FeeCollector {
   pub fn new(
     rpc_client: Arc<RpcClient>,
     operator_keypair: SolanaKeypair,
+    treasury: SolanaPubkey,
     protocol_fee_bps: u64,
   ) -> Self {
     Self {
       rpc_client,
       operator_keypair,
+      treasury,
       protocol_fee_bps,
     }
   }
@@ -121,7 +125,7 @@ impl FeeCollector {
         encoding: Some(UiAccountEncoding::Base64),
         data_slice:  Some(UiDataSliceConfig {
           offset: 0,
-          length: MINT_ACCOUNT_SIZE as usize,
+          length: TOKEN_ACCOUNT_SIZE as usize,
       }),
         commitment: Some(CommitmentConfig::processed()),
         min_context_slot: Some(slot),
@@ -186,21 +190,21 @@ impl FeeCollector {
   }
 
   async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
-    let operator_pubkey = self.operator_keypair.pubkey();
     let ata = get_associated_token_address_with_program_id(
-      &operator_pubkey,
+      &self.treasury,
       mint,
       &spl_token_2022::ID,
     );
-
+    
     // check if it alresady exists
     if let None = self.rpc_client.get_account_with_commitment(&ata, CommitmentConfig::confirmed()).await?.value {
       return Ok(ata)
     }
-
+    
+    let operator_pubkey = self.operator_keypair.pubkey();
     let ix = create_associated_token_account(
       &operator_pubkey,
-      &operator_pubkey,
+      &self.treasury,
       mint,
       &spl_token_2022::ID,
     );

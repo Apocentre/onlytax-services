@@ -1,7 +1,7 @@
 use std::{ops::Deref, str::FromStr};
 use eyre::Report;
 use envconfig::Envconfig;
-use solana_sdk::signature::Keypair;
+use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 
 #[derive(Envconfig)]
 pub struct Config {
@@ -11,6 +11,8 @@ pub struct Config {
   pub solana_rpc: String,
   #[envconfig(from = "OPERATOR_PRIV_KEY")]
   pub operator_keypair: SolanaKeypair,
+  #[envconfig(from = "OPERATOR_PRIV_KEY")]
+  pub treasury: SolanaPubkey,
   #[envconfig(from = "PROTOCOL_FEE_BPS")]
   pub protocol_fee_bps: u64,
 }
@@ -35,6 +37,26 @@ impl FromStr for SolanaKeypair {
 
 impl Deref for SolanaKeypair {
   type Target = Keypair;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+#[derive(Clone, Copy)]
+pub struct SolanaPubkey(Pubkey);
+
+impl FromStr for SolanaPubkey {
+  type Err = Report;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    let pubkey = Pubkey::from_str(s).expect("valid pubkey");
+    Ok(Self(pubkey))
+  }
+}
+
+impl Deref for SolanaPubkey {
+  type Target = Pubkey;
 
   fn deref(&self) -> &Self::Target {
     &self.0
