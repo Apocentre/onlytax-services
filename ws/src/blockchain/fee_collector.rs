@@ -8,15 +8,18 @@ use solana_client::{
   rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType}
 };
 use solana_account_decoder::{
-  parse_account_data::SplTokenAdditionalData, parse_token::{parse_token_v2, TokenAccountType}, parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig
+  parse_account_data::SplTokenAdditionalData, parse_token::{parse_token_v2, TokenAccountType},
+  parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig,
 };
 use solana_sdk::{
-  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction, message::Message, pubkey::Pubkey, signer::Signer, transaction::Transaction
+  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction, message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction
 };
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
-use spl_token_2022::{extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts, instruction::transfer_checked};
+use spl_token_2022::{
+  extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts, instruction::transfer_checked, state::Mint
+};
 
 use crate::utils::config::SolanaKeypair;
 
@@ -52,12 +55,15 @@ impl FeeCollector {
   pub fn collect<'a, 'b: 'a>(
     &'a self,
     mint: &'b Pubkey,
-    decimals: u8,
     withdraw_withheld_authority: &'b Pubkey,
   ) -> Pin<Box<dyn Stream<Item = Result<Vec<u8>>> + Send + 'a>> {
     let stream = try_stream! {
+      let mint_account = Mint::unpack_from_slice(
+        &self.rpc_client.get_account_data(mint).await?,
+      )?;
+
       let protocol_ata = self.create_protocol_ata(mint).await?;
-      let withheld_token_accounts = self.get_withheld_token_accounts(mint, decimals).await?;
+      let withheld_token_accounts = self.get_withheld_token_accounts(mint, mint_account.decimals).await?;
 
       // Send tokens to the withdraw_withheld ascosciated token. In the future we will allow
       // users to choose the destination ata
@@ -89,7 +95,7 @@ impl FeeCollector {
           withdraw_withheld_authority,
           &[withdraw_withheld_authority],
           protocol_fee,
-          decimals,
+          mint_account.decimals,
         )?;
     
         let message = Message::new(
