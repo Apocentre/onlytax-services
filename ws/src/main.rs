@@ -6,7 +6,7 @@ use socketioxide::{SocketIo, TransportType};
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use onlytax_ws::{
-  handler::register_handlers, utils::store::Store
+  handlers::router::register_handlers, utils::store::Store
 };
 
 #[tokio::main]

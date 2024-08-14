@@ -1,3 +1,3 @@
 pub mod utils;
-pub mod handler;
+pub mod handlers;
 pub mod blockchain;

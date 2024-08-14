@@ -37,7 +37,8 @@ pub struct FeeCollector {
   protocol_fee_bps: u64,
 }
 
-// We're using extentions so the token acount is not the classic 165 bytes account.
+// We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
+// TODO: find a better way to find the correct size of the token size
 const TOKEN_ACCOUNT_SIZE: u64 = 346;
 const ACCOUNT_BATCH_SIZE: usize = 10;
 
@@ -119,6 +120,7 @@ impl FeeCollector {
     info!("Reading token accounts with withheld fees");
     let memcmp = RpcFilterType::Memcmp(Memcmp::new(0, MemcmpEncodedBytes::Base58(mint.to_string())));
     let slot = self.rpc_client.get_slot_with_commitment(CommitmentConfig::confirmed()).await?;
+
     let config = RpcProgramAccountsConfig {
       filters: Some(vec![memcmp,]),
       account_config: RpcAccountInfoConfig {
