@@ -11,8 +11,7 @@ use solana_account_decoder::{
   parse_account_data::SplTokenAdditionalData, parse_token::{parse_token_v2, TokenAccountType}, parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig
 };
 use solana_sdk::{
-  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction,
-  instruction::Instruction, message::Message, pubkey::Pubkey, transaction::Transaction,
+  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction, message::Message, pubkey::Pubkey, signer::Signer, transaction::Transaction
 };
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -72,8 +71,7 @@ impl FeeCollector {
         )?;
     
         let message = Message::new(
-          // TODO: use https://marketplace.quicknode.com/add-on/solana-priority-fee to get the real value
-          &[Self::create_priority_fee_ix(1000), ix],
+          &[Self::create_priority_fee_ix(), ix],
           Some(withdraw_withheld_authority),
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;
@@ -154,13 +152,40 @@ impl FeeCollector {
   /// There are 10^6 micro-lamports in one lamport. 2_500_000 micro lamport is => 2_500_000 / 1_000_000 = 2.5 Lamports
   /// The total fees will be: fees = compute budget * U = 200,000 * 2.5 = 500,000 lamport or 0.0005 SOL.
   /// This is 100 higher than the default fee which is 0.000005 SOL
-  fn create_priority_fee_ix(priority_fee_micro_lamports: u64) -> Instruction {
-    ComputeBudgetInstruction::set_compute_unit_price(priority_fee_micro_lamports)
+  fn create_priority_fee_ix() -> Instruction {
+    // TODO: use https://marketplace.quicknode.com/add-on/solana-priority-fee to get the real value
+    ComputeBudgetInstruction::set_compute_unit_price(100_000)
   }
 
   async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
+    let operator_pubkey = self.operator_keypair.pubkey();
     let ix = create_associated_token_account(
-
+      &operator_pubkey,
+      &operator_pubkey,
+      mint,
+      &spl_token_2022::ID,
     );
+
+    let message = Message::new(
+      &[Self::create_priority_fee_ix(), ix],
+      Some(&operator_pubkey)
+    );
+    let tx = Transaction::new(
+      &[&self.operator_keypair],
+      message,
+      self.rpc_client.get_latest_blockhash().await?,
+    );
+  
+    info!("Sending create protocol ata transaction for token {}", mint);
+    let tx_id = self.rpc_client.send_and_confirm_transaction(&tx).await?;
+    info!("Create protocol ata transaction for token {} executed {}", mint, tx_id); 
+
+    let ata = get_associated_token_address_with_program_id(
+      &operator_pubkey,
+      mint,
+      &spl_token_2022::ID,
+    );
+
+    Ok(ata)
   }
 }
