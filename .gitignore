@@ -18,3 +18,4 @@ target/
 yarn.lock
 node_modules
 SECRETS.md
+.config.json
