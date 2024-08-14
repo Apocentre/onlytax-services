@@ -17,6 +17,11 @@ use solana_sdk::{
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_2022::extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts;
 
+struct WitheldAccount {
+  account: Pubkey,
+  amount: u64,
+}
+
 pub struct FeeCollector {
   rpc_client: Arc<RpcClient>,
 }
@@ -73,7 +78,7 @@ impl FeeCollector {
     Box::pin(stream)
   }
 
-  async fn get_source_accounts(&self, mint: &Pubkey, decimals: u8) -> Result<Vec<Pubkey>> {
+  async fn get_source_accounts(&self, mint: &Pubkey, decimals: u8) -> Result<Vec<WitheldAccount>> {
     info!("Reading token accounts with withheld fees");
     let memcmp = RpcFilterType::Memcmp(Memcmp::new(0, MemcmpEncodedBytes::Base58(mint.to_string())));
     let slot = self.rpc_client.get_slot_with_commitment(CommitmentConfig::confirmed()).await?;
@@ -96,7 +101,7 @@ impl FeeCollector {
     info!("Found total {} token accounts", token_accounts.len());
   
     let mut pending_fees = 0;
-    let source_accounts: Vec<Pubkey> = token_accounts
+    let source_accounts: Vec<WitheldAccount> = token_accounts
     .into_iter()
     .filter_map(|(pk, a)| {
       let Ok(ta_type) = parse_token_v2(&a.data, Some(&SplTokenAdditionalData::with_decimals(decimals))) else {
@@ -117,9 +122,20 @@ impl FeeCollector {
   
         pending_fees += fee_amount.withheld_amount;
         fee_amount.withheld_amount > 0
+      })
+      .map(|e| {
+        let UiExtension::TransferFeeAmount(fee_amount) = e else {
+          panic!("Should be a transfer fee extension");
+        };
+
+        fee_amount.withheld_amount
       });
   
-      if witheld_amount.is_some() {Some(pk)} else {None}
+      let Some(amount) = witheld_amount else {
+        return None
+      };
+
+      Some(WitheldAccount {account: pk, amount})
     })
     .collect();
   
