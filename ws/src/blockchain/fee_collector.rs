@@ -159,6 +159,17 @@ impl FeeCollector {
 
   async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
     let operator_pubkey = self.operator_keypair.pubkey();
+    let ata = get_associated_token_address_with_program_id(
+      &operator_pubkey,
+      mint,
+      &spl_token_2022::ID,
+    );
+
+    // check if it alresady exists
+    if let None = self.rpc_client.get_account_with_commitment(&ata, CommitmentConfig::confirmed()).await?.value {
+      return Ok(ata)
+    }
+
     let ix = create_associated_token_account(
       &operator_pubkey,
       &operator_pubkey,
@@ -179,12 +190,6 @@ impl FeeCollector {
     info!("Sending create protocol ata transaction for token {}", mint);
     let tx_id = self.rpc_client.send_and_confirm_transaction(&tx).await?;
     info!("Create protocol ata transaction for token {} executed {}", mint, tx_id); 
-
-    let ata = get_associated_token_address_with_program_id(
-      &operator_pubkey,
-      mint,
-      &spl_token_2022::ID,
-    );
 
     Ok(ata)
   }
