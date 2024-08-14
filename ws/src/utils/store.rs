@@ -15,7 +15,10 @@ impl Store {
   pub async fn new() -> Self {
     let config = Config::init_from_env().unwrap();
     let rpc_client = Arc::new(RpcClient::new(config.solana_rpc.clone()));
-    let fee_collector = Arc::new(FeeCollector::new(Arc::clone(&rpc_client)));
+    let fee_collector = Arc::new(FeeCollector::new(
+      Arc::clone(&rpc_client),
+      config.operator_keypair.clone(),
+    ));
 
     Self {
       config,

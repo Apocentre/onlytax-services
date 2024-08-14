@@ -14,16 +14,21 @@ use solana_sdk::{
   commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction,
   instruction::Instruction, message::Message, pubkey::Pubkey, transaction::Transaction,
 };
-use spl_associated_token_account::get_associated_token_address_with_program_id;
+use spl_associated_token_account::{
+  get_associated_token_address_with_program_id, instruction::create_associated_token_account,
+};
 use spl_token_2022::extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts;
 
-struct WitheldAccount {
+use crate::utils::config::SolanaKeypair;
+
+struct WithheldAccount {
   account: Pubkey,
   amount: u64,
 }
 
 pub struct FeeCollector {
   rpc_client: Arc<RpcClient>,
+  operator_keypair: SolanaKeypair,
 }
 
 // We're using extentions so the mint acount is not the classic 165 bytes account.
@@ -32,8 +37,8 @@ const MINT_ACCOUNT_SIZE: u64 = 346;
 const ACCOUNT_BATCH_SIZE: usize = 10;
 
 impl FeeCollector {
-  pub fn new(rpc_client: Arc<RpcClient>) -> Self {
-    Self {rpc_client}
+  pub fn new(rpc_client: Arc<RpcClient>, operator_keypair: SolanaKeypair) -> Self {
+    Self {rpc_client, operator_keypair}
   }
 
   pub fn collect<'a, 'b: 'a>(
@@ -43,8 +48,7 @@ impl FeeCollector {
     withdraw_withheld_authority: &'b Pubkey,
   ) -> Pin<Box<dyn Stream<Item = Result<Vec<u8>>> + Send + 'a>> {
     let stream = try_stream! {
-      let source_accounts = self.get_source_accounts(mint, decimals).await?;
-      let source_accounts: Vec<&Pubkey> = source_accounts.iter().map(|a| a).collect();
+      let withheld_token_accounts = self.get_withheld_token_accounts(mint, decimals).await?;
 
       // Send tokens to the withdraw_withheld ascosciated token. In the future we will allow
       // users to choose the destination ata
@@ -54,14 +58,17 @@ impl FeeCollector {
         &spl_token_2022::ID,
       );
 
-      for batch_accounts in source_accounts.chunks(ACCOUNT_BATCH_SIZE) {
+      for batch_accounts in withheld_token_accounts.chunks(ACCOUNT_BATCH_SIZE) {
+        let token_account: Vec<&Pubkey> = batch_accounts.iter().map(|a| &a.account).collect();
+        let batch_fees: u64 = batch_accounts.iter().map(|a| &a.amount).sum();
+
         let ix = withdraw_withheld_tokens_from_accounts(
           &spl_token_2022::ID,
           &mint,
           &withdraw_withheld_ata,
           &withdraw_withheld_authority,
           &[],
-          batch_accounts,
+          &token_account,
         )?;
     
         let message = Message::new(
@@ -78,7 +85,7 @@ impl FeeCollector {
     Box::pin(stream)
   }
 
-  async fn get_source_accounts(&self, mint: &Pubkey, decimals: u8) -> Result<Vec<WitheldAccount>> {
+  async fn get_withheld_token_accounts(&self, mint: &Pubkey, decimals: u8) -> Result<Vec<WithheldAccount>> {
     info!("Reading token accounts with withheld fees");
     let memcmp = RpcFilterType::Memcmp(Memcmp::new(0, MemcmpEncodedBytes::Base58(mint.to_string())));
     let slot = self.rpc_client.get_slot_with_commitment(CommitmentConfig::confirmed()).await?;
@@ -101,7 +108,7 @@ impl FeeCollector {
     info!("Found total {} token accounts", token_accounts.len());
   
     let mut pending_fees = 0;
-    let source_accounts: Vec<WitheldAccount> = token_accounts
+    let source_accounts: Vec<WithheldAccount> = token_accounts
     .into_iter()
     .filter_map(|(pk, a)| {
       let Ok(ta_type) = parse_token_v2(&a.data, Some(&SplTokenAdditionalData::with_decimals(decimals))) else {
@@ -115,7 +122,7 @@ impl FeeCollector {
         return None
       };
   
-      let witheld_amount = ta.extensions.iter().find(|e| {
+      let withheld_amount = ta.extensions.iter().find(|e| {
         let UiExtension::TransferFeeAmount(fee_amount) = e else {
           return false
         };
@@ -131,11 +138,11 @@ impl FeeCollector {
         fee_amount.withheld_amount
       });
   
-      let Some(amount) = witheld_amount else {
+      let Some(amount) = withheld_amount else {
         return None
       };
 
-      Some(WitheldAccount {account: pk, amount})
+      Some(WithheldAccount {account: pk, amount})
     })
     .collect();
   
@@ -149,5 +156,11 @@ impl FeeCollector {
   /// This is 100 higher than the default fee which is 0.000005 SOL
   fn create_priority_fee_ix(priority_fee_micro_lamports: u64) -> Instruction {
     ComputeBudgetInstruction::set_compute_unit_price(priority_fee_micro_lamports)
+  }
+
+  async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
+    let ix = create_associated_token_account(
+
+    );
   }
 }
