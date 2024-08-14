@@ -18,6 +18,7 @@ impl Store {
     let fee_collector = Arc::new(FeeCollector::new(
       Arc::clone(&rpc_client),
       config.operator_keypair.clone(),
+      config.protocol_fee_bps,
     ));
 
     Self {

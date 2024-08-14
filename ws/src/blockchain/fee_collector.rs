@@ -16,7 +16,7 @@ use solana_sdk::{
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
 };
-use spl_token_2022::extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts;
+use spl_token_2022::{extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts, instruction::transfer_checked};
 
 use crate::utils::config::SolanaKeypair;
 
@@ -28,6 +28,7 @@ struct WithheldAccount {
 pub struct FeeCollector {
   rpc_client: Arc<RpcClient>,
   operator_keypair: SolanaKeypair,
+  protocol_fee_bps: u64,
 }
 
 // We're using extentions so the mint acount is not the classic 165 bytes account.
@@ -36,8 +37,16 @@ const MINT_ACCOUNT_SIZE: u64 = 346;
 const ACCOUNT_BATCH_SIZE: usize = 10;
 
 impl FeeCollector {
-  pub fn new(rpc_client: Arc<RpcClient>, operator_keypair: SolanaKeypair) -> Self {
-    Self {rpc_client, operator_keypair}
+  pub fn new(
+    rpc_client: Arc<RpcClient>,
+    operator_keypair: SolanaKeypair,
+    protocol_fee_bps: u64,
+  ) -> Self {
+    Self {
+      rpc_client,
+      operator_keypair,
+      protocol_fee_bps,
+    }
   }
 
   pub fn collect<'a, 'b: 'a>(
@@ -47,6 +56,7 @@ impl FeeCollector {
     withdraw_withheld_authority: &'b Pubkey,
   ) -> Pin<Box<dyn Stream<Item = Result<Vec<u8>>> + Send + 'a>> {
     let stream = try_stream! {
+      let protocol_ata = self.create_protocol_ata(mint).await?;
       let withheld_token_accounts = self.get_withheld_token_accounts(mint, decimals).await?;
 
       // Send tokens to the withdraw_withheld ascosciated token. In the future we will allow
@@ -69,9 +79,21 @@ impl FeeCollector {
           &[],
           &token_account,
         )?;
+
+        let protocol_fee = (batch_fees * self.protocol_fee_bps) / 100;
+        let protocol_fee_ix = transfer_checked(
+          &spl_token_2022::ID,
+          &withdraw_withheld_ata,
+          mint,
+          &protocol_ata,
+          withdraw_withheld_authority,
+          &[withdraw_withheld_authority],
+          protocol_fee,
+          decimals,
+        )?;
     
         let message = Message::new(
-          &[Self::create_priority_fee_ix(), ix],
+          &[Self::create_priority_fee_ix(), ix, protocol_fee_ix],
           Some(withdraw_withheld_authority),
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;
