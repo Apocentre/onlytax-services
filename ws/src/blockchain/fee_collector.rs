@@ -79,7 +79,7 @@ impl FeeCollector {
       );
 
       for batch_accounts in withheld_token_accounts.chunks(ACCOUNT_BATCH_SIZE) {
-        let token_account: Vec<&Pubkey> = batch_accounts.iter().map(|a| &a.account).collect();
+        let token_accounts: Vec<&Pubkey> = batch_accounts.iter().map(|a| &a.account).collect();
         let batch_fees: u64 = batch_accounts.iter().map(|a| &a.amount).sum();
 
         let ix = withdraw_withheld_tokens_from_accounts(
@@ -88,7 +88,7 @@ impl FeeCollector {
           &withdraw_withheld_ata,
           &withdraw_withheld_authority,
           &[],
-          &token_account,
+          &token_accounts,
         )?;
 
         let protocol_fee = (batch_fees * self.protocol_fee_bps) / 100;
@@ -199,7 +199,7 @@ impl FeeCollector {
     );
     
     // check if it alresady exists
-    if let None = self.rpc_client.get_account_with_commitment(&ata, CommitmentConfig::confirmed()).await?.value {
+    if let Some(_) = self.rpc_client.get_account_with_commitment(&ata, CommitmentConfig::confirmed()).await?.value {
       return Ok(ata)
     }
     

@@ -27,7 +27,7 @@ export const createTestAccounts = () => {
   return accounts;
 }
 
-export const createAtaIfNedded = async (payer, mint, account) => {
+export const createAtaIfNeeded = async (payer, mint, account) => {
   const ata = await getAssociatedTokenAddress(
     mint,
     account.publicKey,
@@ -54,8 +54,8 @@ export const createAtaIfNedded = async (payer, mint, account) => {
 let count = 1;
 
 export const tranfer = async (mint, decimals, payer, from, to, amount) => {
-  const fromAta = await createAtaIfNedded(payer, mint, from);
-  const toAta = await createAtaIfNedded(payer, mint, to);
+  const fromAta = await createAtaIfNeeded(payer, mint, from);
+  const toAta = await createAtaIfNeeded(payer, mint, to);
   let amountToSend;
   
   if(!amount) {
