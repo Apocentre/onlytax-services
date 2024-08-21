@@ -3,7 +3,7 @@ import * as bip39 from "bip39";
 import {Keypair, PublicKey, Connection} from "@solana/web3.js"
 import {
   TOKEN_2022_PROGRAM_ID,
-  transferCheckedWithFee,
+  transferChecked,
   createAssociatedTokenAccountIdempotent,
   getAssociatedTokenAddress
 } from '@solana/spl-token';
@@ -20,7 +20,7 @@ const main = async () => {
   // transfer chain: rootWallet -> testAccounts[0] -> testAccounts[1] -> testAccounts[2]...
   await tranfer(rootWallet, testAccounts[0], BigInt(1000 * Math.pow(10, 6)))
 
-  for(let i = 1; i < 99; i++) {
+  for(let i = 0; i < 99; i++) {
     const from = testAccounts[i]
     const to = testAccounts[i + 1]; 
 
@@ -80,14 +80,12 @@ const tranfer = async (from, to, amount) => {
     const fromTokenBalance = await connection.getTokenAccountBalance(fromAta);
     const balance = BigInt(fromTokenBalance.value.amount);
     // send 50% of the total balance
-    amountToSend = BigInt((balance * BigInt(50) / BigInt(100)) * BigInt(Math.pow(10, 6)));
+    amountToSend = BigInt((balance * BigInt(50) / BigInt(100)));
   } else {
     amountToSend = amount;
   }
-  
-  const fee = (amountToSend * BigInt(500)) / BigInt(10_000);
 
-  await transferCheckedWithFee(
+  await transferChecked(
     connection,
     rootWallet, // root is always the payer
     fromAta,
@@ -96,11 +94,12 @@ const tranfer = async (from, to, amount) => {
     from.publicKey,
     amountToSend,
     decimals,
-    fee,
     [rootWallet, from],
+    null,
+    TOKEN_2022_PROGRAM_ID,
   );
 
-  console.log(`[${count++}] Transfered from ${fromAta} to ${toAta}`)
+  console.log(`[${count++}] Transfered ${amountToSend} from ${fromAta} to ${toAta}`)
 }
 
 main()

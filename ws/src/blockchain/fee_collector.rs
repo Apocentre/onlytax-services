@@ -40,7 +40,7 @@ pub struct FeeCollector {
 // We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
 // TODO: find a better way to find the correct size of the token size
 const TOKEN_ACCOUNT_SIZE: u64 = 346;
-const ACCOUNT_BATCH_SIZE: usize = 10;
+const ACCOUNT_BATCH_SIZE: usize = 25;
 
 impl FeeCollector {
   pub fn new(

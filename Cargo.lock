@@ -2437,6 +2437,7 @@ dependencies = [
  "eyre",
  "futures",
  "log",
+ "serde",
  "socketioxide",
  "solana-account-decoder",
  "solana-client",

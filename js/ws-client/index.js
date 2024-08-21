@@ -1,4 +1,5 @@
-const {io} = require("socket.io-client");
+import {io} from "socket.io-client";
+import {Transaction} from "@solana/web3.js";
 
 const main = async () => {
   const socket = io("ws://localhost:8090", {
@@ -10,7 +11,10 @@ const main = async () => {
     socket.emit("new-tokens");
 
     socket.on("681gMAUpbqTms3RW773mHXjx8hvw4SyosjC2ZcizG6bd", (msg) => {
-      console.log("New trade received", msg);
+      console.log("New encoded transaction", msg);
+
+      const tx = Transaction.from(msg.data);
+      console.log("Decoded transaction", tx);
     });
   });
 
