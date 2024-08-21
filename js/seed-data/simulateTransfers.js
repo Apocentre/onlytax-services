@@ -1,4 +1,4 @@
-import { HDKey } from "micro-ed25519-hdkey";
+import {HDKey} from "micro-ed25519-hdkey";
 import * as bip39 from "bip39";
 import {Keypair, PublicKey, Connection} from "@solana/web3.js"
 import {

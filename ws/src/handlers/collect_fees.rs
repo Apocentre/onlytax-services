@@ -12,12 +12,13 @@ pub async fn exec(
   mint: &str,
   withdraw_withheld_authority: &str,
 ) -> Result<()> {
+  let room = withdraw_withheld_authority.to_string();
   let mint = Pubkey::from_str(mint)?;
-  let withdraw_withheld_authority = Pubkey::from_str(withdraw_withheld_authority)?;
-  let mut stream = store.fee_collector.collect(&mint, &withdraw_withheld_authority);
+  let withdraw_withheld_authority_key = Pubkey::from_str(withdraw_withheld_authority)?;
+  let mut stream = store.fee_collector.collect(&mint, &withdraw_withheld_authority_key);
 
   while let Some(Ok(serialized_tx)) = stream.next().await {
-    if let Err(err) = socket.emit("new_batch", serialized_tx) {
+    if let Err(err) = socket.emit(room.clone(), serialized_tx) {
       error!("failed to push new_batch for authority {} {}", withdraw_withheld_authority, err);
     }
   }

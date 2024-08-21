@@ -11,7 +11,7 @@ pub struct Config {
   pub solana_rpc: String,
   #[envconfig(from = "OPERATOR_PRIV_KEY")]
   pub operator_keypair: SolanaKeypair,
-  #[envconfig(from = "OPERATOR_PRIV_KEY")]
+  #[envconfig(from = "TREASURY")]
   pub treasury: SolanaPubkey,
   #[envconfig(from = "PROTOCOL_FEE_BPS")]
   pub protocol_fee_bps: u64,
