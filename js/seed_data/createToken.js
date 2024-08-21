@@ -27,7 +27,6 @@ const {
 
 // Generate keys for payer, mint authority, and mint
 const payer = Keypair.fromSecretKey(Buffer.from(rootWallet));
-
 const mintAuthority = Keypair.fromSecretKey(Buffer.from(rootWallet));
 const mintKeypair = Keypair.generate()
 const mint = mintKeypair.publicKey;
@@ -44,7 +43,7 @@ const mintLen = getMintLen(extensions);
 const decimals = 6;
 const feeBasisPoints = 500; // 5%
 const maxFee = BigInt("18446744073709551615"); // max u64
-const mintAmount = BigInt(8_000_000_000 * Math.pow(10, decimals)); // Mint 1,000,000 tokens
+const mintAmount = BigInt(1_000_000_000 * Math.pow(10, decimals)); // Mint 1,000,000 tokens
 
 const main = async () => {
   const connection = new Connection(rpc, "confirmed");
