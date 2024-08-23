@@ -17,7 +17,6 @@ const main = async () => {
 
   socket.on("connect", () => {
     socket.emit("collect", "9NxTF8W3gB1y49LBn1GTp5QqPmkdp4P8HJDiqJgJQSUB", "681gMAUpbqTms3RW773mHXjx8hvw4SyosjC2ZcizG6bd");
-    socket.emit("new-tokens");
 
     socket.on("681gMAUpbqTms3RW773mHXjx8hvw4SyosjC2ZcizG6bd", async (msg) => {
       console.log("New batch transaction");
