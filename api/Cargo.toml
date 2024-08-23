@@ -4,3 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+envconfig = "0.10.0"
+actix-web = "4.3"
+actix-cors = "0.7"
+dotenv = "0.15"
+onlytax-storage = { path = "../storage" }
+eyre = "0.6.8"
+env_logger = "0.11"
+futures-util = "0.3.21"
+hex = "0.4.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+thiserror = "1.0.61"
+chrono = "0.4.38"
+tokio = "1.23"
+jsonwebtoken = "9.3.0"
+log = "0.4.22"
+ed25519-dalek = { version = "1.0.1", features = ["serde"] }
+bs58 = "0.5.1"
