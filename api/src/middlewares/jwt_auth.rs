@@ -10,6 +10,7 @@ use actix_web::{
   HttpRequest,
   error::ErrorUnauthorized,
 };
+use log::error;
 use futures_util::future::{LocalBoxFuture, ok, err, Ready};
 use crate::services::auth::Auth;
 
@@ -112,7 +113,7 @@ where
             return Ok(srv.call(req).await?)
           },
           Err(error) => {
-            println!("{}", error);
+            error!("{}", error);
             return Err(ErrorUnauthorized("Unauthorized"))
           }
         }
