@@ -69,7 +69,7 @@ where
       async move {
         let headers = req.headers();
 
-        let auth_data = headers.get("X-Onlybags-Auth")
+        let auth_data = headers.get("X-Onlytax-Auth")
         .ok_or(ErrorUnauthorized("Unauthorized"))?
         .to_str()
         .map_err(|_| ErrorUnauthorized("Unauthorized"))?
@@ -89,7 +89,7 @@ where
         }
 
         let sig = auth_data.get(2).ok_or(ErrorUnauthorized("Unauthorized"))?;
-        let msg = format!("Onlybags Auth:{}", ts);
+        let msg = format!("Onlytax Auth:{}", ts);
         let msg = msg.as_bytes();
 
         verify_sig(&msg, account.as_bytes(), sig).map_err(|_| ErrorUnauthorized("Unauthorized"))?;
