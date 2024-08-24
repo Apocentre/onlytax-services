@@ -12,8 +12,8 @@ use solana_account_decoder::{
   parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig,
 };
 use solana_sdk::{
-  commitment_config::CommitmentConfig, message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer,
-  transaction::Transaction,
+  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, message::Message,
+  program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction,
 };
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -24,6 +24,8 @@ use spl_token_2022::{
 };
 
 use crate::{blockchain::priority_fee::create_priority_fee_ix, utils::config::{SolanaKeypair, SolanaPubkey}};
+
+use super::priority_fee::DEFAULT_PRIORITY_FEE;
 
 struct WithheldAccount {
   account: Pubkey,
@@ -108,7 +110,7 @@ impl FeeCollector {
         )?;
     
         let message = Message::new(
-          &[ix, protocol_fee_ix],
+          &[ComputeBudgetInstruction::set_compute_unit_price(DEFAULT_PRIORITY_FEE), ix, protocol_fee_ix],
           Some(withdraw_withheld_authority),
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;

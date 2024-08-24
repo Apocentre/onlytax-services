@@ -33,7 +33,7 @@ pub struct PerComputeUnit {
   pub medium: u64,
 }
 
-const DEFAULT_PRIORITY_FEE: u64 = 50_000;
+pub const DEFAULT_PRIORITY_FEE: u64 = 50_000;
 
 
 /// There are 10^6 micro-lamports in one lamport. 2_500_000 micro lamport is => 2_500_000 / 1_000_000 = 2.5 Lamports
