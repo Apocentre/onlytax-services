@@ -40,7 +40,7 @@ pub struct FeeCollector {
 // We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
 // TODO: find a better way to find the correct size of the token size
 const TOKEN_ACCOUNT_SIZE: u64 = 346;
-const ACCOUNT_BATCH_SIZE: usize = 25;
+const ACCOUNT_BATCH_SIZE: usize = 1;
 
 impl FeeCollector {
   pub fn new(
@@ -61,7 +61,7 @@ impl FeeCollector {
     &'a self,
     mint: &'b Pubkey,
     withdraw_withheld_authority: &'b Pubkey,
-  ) -> Pin<Box<dyn Stream<Item = Result<Vec<u8>>> + Send + 'a>> {
+  ) -> Pin<Box<dyn Stream<Item = Result<(Vec<u8>, usize)>> + Send + 'a>> {
     let stream = try_stream! {
       let mint_account = Mint::unpack_from_slice(
         &self.rpc_client.get_account_data(mint).await?,
@@ -69,6 +69,7 @@ impl FeeCollector {
 
       let protocol_ata = self.create_protocol_ata(mint).await?;
       let withheld_token_accounts = self.get_withheld_token_accounts(mint, mint_account.decimals).await?;
+      let withheld_token_accounts_len = withheld_token_accounts.len();
 
       // Send tokens to the withdraw_withheld ascosciated token. In the future we will allow
       // users to choose the destination ata
@@ -109,7 +110,7 @@ impl FeeCollector {
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;
       
-        yield tx
+        yield (tx, withheld_token_accounts_len)
       }
     };
 
