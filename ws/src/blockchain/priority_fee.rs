@@ -63,7 +63,7 @@ pub async fn create_priority_fee_ix(create_priority_fee_ix: &str) -> Instruction
     return ComputeBudgetInstruction::set_compute_unit_price(DEFAULT_PRIORITY_FEE)
   }
 
-  let priority_fee = response.unwrap().result.per_compute_unit.high;
+  let priority_fee = response.unwrap().result.per_compute_unit.extreme;
   ComputeBudgetInstruction::set_compute_unit_price(priority_fee)
 }
 
