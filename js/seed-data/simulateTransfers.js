@@ -3,7 +3,7 @@ import config from "./.config.json" assert { type: "json" };
 import {createTestAccounts, tranfer} from "./common.js"
 
 const rootWallet = Keypair.fromSecretKey(Buffer.from(config.rootWallet));
-const mint = new PublicKey("69LJXLyCpjdTRNac4H48HGE1mbq8B6694qDe1YkumD4x");
+const mint = new PublicKey("HAaXGq8cCPjM29KPcJZDV5Hg6o7WXa96RKuZ2hZPuW86");
 const decimals = 6;
 
 const main = async () => {
