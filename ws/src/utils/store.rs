@@ -20,6 +20,7 @@ impl Store {
       config.operator_keypair.clone(),
       config.treasury,
       config.protocol_fee_bps,
+      config.priority_fee_rpc.clone(),
     ));
 
     Self {

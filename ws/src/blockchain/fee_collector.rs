@@ -12,8 +12,8 @@ use solana_account_decoder::{
   parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig,
 };
 use solana_sdk::{
-  commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, instruction::Instruction,
-  message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction,
+  commitment_config::CommitmentConfig, message::Message, program_pack::Pack, pubkey::Pubkey, signer::Signer,
+  transaction::Transaction,
 };
 use spl_associated_token_account::{
   get_associated_token_address_with_program_id, instruction::create_associated_token_account,
@@ -23,7 +23,7 @@ use spl_token_2022::{
   instruction::transfer_checked, state::Mint,
 };
 
-use crate::utils::config::{SolanaKeypair, SolanaPubkey};
+use crate::{blockchain::priority_fee::create_priority_fee_ix, utils::config::{SolanaKeypair, SolanaPubkey}};
 
 struct WithheldAccount {
   account: Pubkey,
@@ -35,6 +35,7 @@ pub struct FeeCollector {
   operator_keypair: SolanaKeypair,
   treasury: SolanaPubkey,
   protocol_fee_bps: u64,
+  priority_fee_rpc: String,
 }
 
 // We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
@@ -48,12 +49,14 @@ impl FeeCollector {
     operator_keypair: SolanaKeypair,
     treasury: SolanaPubkey,
     protocol_fee_bps: u64,
+    priority_fee_rpc: String,
   ) -> Self {
     Self {
       rpc_client,
       operator_keypair,
       treasury,
       protocol_fee_bps,
+      priority_fee_rpc,
     }
   }
 
@@ -105,7 +108,7 @@ impl FeeCollector {
         )?;
     
         let message = Message::new(
-          &[Self::create_priority_fee_ix(), ix, protocol_fee_ix],
+          &[ix, protocol_fee_ix],
           Some(withdraw_withheld_authority),
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;
@@ -184,14 +187,6 @@ impl FeeCollector {
     Ok(source_accounts)
   }
 
-  /// There are 10^6 micro-lamports in one lamport. 2_500_000 micro lamport is => 2_500_000 / 1_000_000 = 2.5 Lamports
-  /// The total fees will be: fees = compute budget * U = 200,000 * 2.5 = 500,000 lamport or 0.0005 SOL.
-  /// This is 100 higher than the default fee which is 0.000005 SOL
-  fn create_priority_fee_ix() -> Instruction {
-    // TODO: use https://marketplace.quicknode.com/add-on/solana-priority-fee to get the real value
-    ComputeBudgetInstruction::set_compute_unit_price(100_000)
-  }
-
   async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
     let ata = get_associated_token_address_with_program_id(
       &self.treasury,
@@ -199,7 +194,7 @@ impl FeeCollector {
       &spl_token_2022::ID,
     );
     
-    // check if it alresady exists
+    // check if it already exists
     if let Some(_) = self.rpc_client.get_account_with_commitment(&ata, CommitmentConfig::confirmed()).await?.value {
       return Ok(ata)
     }
@@ -213,7 +208,7 @@ impl FeeCollector {
     );
 
     let message = Message::new(
-      &[Self::create_priority_fee_ix(), ix],
+      &[create_priority_fee_ix(&self.priority_fee_rpc).await, ix],
       Some(&operator_pubkey)
     );
     let tx = Transaction::new(

@@ -9,6 +9,8 @@ pub struct Config {
   pub port: u64,
   #[envconfig(from = "SOLANA_RPC")]
   pub solana_rpc: String,
+  #[envconfig(from = "PRIORITY_FEE_RPC")]
+  pub priority_fee_rpc: String,
   #[envconfig(from = "OPERATOR_PRIV_KEY")]
   pub operator_keypair: SolanaKeypair,
   #[envconfig(from = "TREASURY")]
