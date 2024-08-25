@@ -1,12 +1,15 @@
 import {Keypair, PublicKey} from "@solana/web3.js"
 import config from "./.config.json" assert { type: "json" };
-import {createTestAccounts, tranfer} from "./common.js"
+import {createTestAccounts, tranfer, createAtaIfNeeded} from "./common.js"
 
 const rootWallet = Keypair.fromSecretKey(Buffer.from(config.rootWallet));
-const mint = new PublicKey("HAaXGq8cCPjM29KPcJZDV5Hg6o7WXa96RKuZ2hZPuW86");
+const withdrawWithheldAuthority = Keypair.fromSecretKey(Buffer.from(config.withdrawWithheldAuthorityKey));
+const mint = new PublicKey("Ex7QKTHsGHMkVtYg8tgi48Wyw1XrH8hM4dp6B8SGenVz");
 const decimals = 6;
 
 const main = async () => {
+  createAtaIfNeeded(rootWallet, mint, withdrawWithheldAuthority);
+
   const testAccounts = createTestAccounts();
   // transfer chain: rootWallet -> testAccounts[0] -> testAccounts[1] -> testAccounts[2]...
   await tranfer(mint, decimals, rootWallet, rootWallet, testAccounts[0], BigInt(1000 * Math.pow(10, 6)))

@@ -61,8 +61,8 @@ export const tranfer = async (mint, decimals, payer, from, to, amount) => {
   if(!amount) {
     const fromTokenBalance = await connection.getTokenAccountBalance(fromAta);
     const balance = BigInt(fromTokenBalance.value.amount);
-    // send 50% of the total balance
-    amountToSend = BigInt((balance * BigInt(50) / BigInt(100)));
+    // send 90% of the total balance
+    amountToSend = BigInt((balance * BigInt(90) / BigInt(100)));
   } else {
     amountToSend = amount;
   }
