@@ -3,7 +3,8 @@ use envconfig::Envconfig;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use onlytax_api::services::auth::Auth;
 use onlytax_storage::connection_pool::ConnectionPool;
-use crate::blockchain::{fee_collector::FeeCollector, helius::helius_api::HeliusApi};
+use onlytax_blockchain::helius::helius_api::HeliusApi;
+use crate::blockchain::fee_collector::FeeCollector;
 
 use super::config::Config;
 

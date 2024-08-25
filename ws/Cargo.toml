@@ -20,6 +20,7 @@ tower = "0.5.0"
 tower-http = { version = "0.5.2", features = ["cors", "fs"] }
 onlytax-storage = { path = "../storage" }
 onlytax-api = { path = "../api" }
+onlytax-blockchain = { path = "../blockchain" }
 solana-client = "2.0.5"
 solana-sdk = "2.0.5"
 spl-token-2022 = "4.0.0"

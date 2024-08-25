@@ -15,10 +15,8 @@ use spl_token_2022::{
   extension::transfer_fee::instruction::withdraw_withheld_tokens_from_accounts,
   instruction::transfer_checked, state::Mint,
 };
-
+use onlytax_blockchain::helius::helius_api::HeliusApi;
 use crate::utils::config::{SolanaKeypair, SolanaPubkey};
-use super::helius::helius_api::HeliusApi;
-
 
 const DEFAULT_PRIORITY_FEE: u64 = 50_000;
 
