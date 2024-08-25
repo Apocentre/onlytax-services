@@ -2,8 +2,7 @@ use log::info;
 use reqwest::Client;
 use eyre::Result;
 use super::types::{
-  Body, TokenAccountParam, Response, TokenAccountResponse,
-  PriorityParam, PriorityOption, PriorityFeeResponse,
+  Body, PriorityFeeResponse, PriorityOption, PriorityParam, Response, TokenAccount, TokenAccountParam, TokenAccountResponse
 };
 
 pub struct HeliusApi {
@@ -17,17 +16,17 @@ impl HeliusApi {
     Self {api}
   }
 
-  pub async fn fetch_token_accounts(&self, mint: &str) -> Result<Vec<TokenAccountResponse>> {
+  pub async fn fetch_token_accounts(&self, mint: &str) -> Result<Vec<TokenAccount>> {
     let mut page = 1;
     let mut response = self.send_fetch_token_accounts(mint, page).await?;
     let mut total = response.total;
-    let mut result = vec![response];
+    let mut result = response.token_accounts;
 
     while total > 0 {
       page += 1;
       response = self.send_fetch_token_accounts(mint, page).await?;
       total = response.total;
-      result.push(response);
+      result.extend(response.token_accounts);
     }
   
     Ok(result)

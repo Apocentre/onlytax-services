@@ -1,4 +1,4 @@
-use std::{pin::Pin, sync::Arc};
+use std::{pin::Pin, str::FromStr, sync::Arc};
 use async_stream::try_stream;
 use futures::Stream;
 use eyre::Result;
@@ -124,71 +124,33 @@ impl FeeCollector {
     Box::pin(stream)
   }
 
-  async fn get_withheld_token_accounts(&self, mint: &Pubkey, decimals: u8) -> Result<Vec<WithheldAccount>> {
+  async fn get_withheld_token_accounts(&self, mint: &Pubkey) -> Result<Vec<WithheldAccount>> {
     info!("Reading token accounts with withheld fees");
-    let memcmp = RpcFilterType::Memcmp(Memcmp::new(0, MemcmpEncodedBytes::Base58(mint.to_string())));
-    let slot = self.rpc_client.get_slot_with_commitment(CommitmentConfig::confirmed()).await?;
+    
+    let withheld_accounts = self.helius_api.fetch_token_accounts(&mint.to_string()).await?
+    .iter()
+    .filter_map(|ta| {
+      let withheld_amount = ta.token_extensions.transfer_fee_amount.withheld_amount;
+      if withheld_amount == 0 {
+        return None
+      }
 
-    let config = RpcProgramAccountsConfig {
-      filters: Some(vec![memcmp,]),
-      account_config: RpcAccountInfoConfig {
-        encoding: Some(UiAccountEncoding::Base64),
-        data_slice:  Some(UiDataSliceConfig {
-          offset: 0,
-          length: TOKEN_ACCOUNT_SIZE as usize,
-      }),
-        commitment: Some(CommitmentConfig::confirmed()),
-        min_context_slot: Some(slot),
-      },
-      with_context: Some(true),
-      sort_results: None,
-    };
-  
-    let token_accounts = self.rpc_client.get_program_accounts_with_config(&spl_token_2022::ID, config).await?;
-    info!("Found total {} token accounts", token_accounts.len());
-  
-    let mut pending_fees = 0;
-    let source_accounts: Vec<WithheldAccount> = token_accounts
-    .into_iter()
-    .filter_map(|(pk, a)| {
-      let Ok(ta_type) = parse_token_v2(&a.data, Some(&SplTokenAdditionalData::with_decimals(decimals))) else {
+      let account = Pubkey::from_str(&ta.address);
+      if account.is_err() {
         return None
-      };
-  
-      Some((pk, ta_type))
-    })
-    .filter_map(|(pk, ta_type)| {
-      let TokenAccountType::Account(ta) = ta_type else {
-        return None
-      };
-  
-      let withheld_amount = ta.extensions.iter().find(|e| {
-        let UiExtension::TransferFeeAmount(fee_amount) = e else {
-          return false
-        };
-  
-        pending_fees += fee_amount.withheld_amount;
-        fee_amount.withheld_amount > 0
+      }
+
+      Some(WithheldAccount {
+        account: account.unwrap(),
+        amount: withheld_amount,
       })
-      .map(|e| {
-        let UiExtension::TransferFeeAmount(fee_amount) = e else {
-          panic!("Should be a transfer fee extension");
-        };
-
-        fee_amount.withheld_amount
-      });
-  
-      let Some(amount) = withheld_amount else {
-        return None
-      };
-
-      Some(WithheldAccount {account: pk, amount})
     })
-    .collect();
+    .collect::<Vec<WithheldAccount>>();
+
+    let total_fees: u64 = withheld_accounts.iter().map(|w| w.amount).sum();
+    info!("Found total {} token accounts with withheld fees of {}", withheld_accounts.len(), total_fees);
   
-    info!("Found total {} token accounts with withheld fees of {}", source_accounts.len(), pending_fees);
-  
-    Ok(source_accounts)
+    Ok(withheld_accounts)
   }
 
   async fn create_protocol_ata(&self, mint: &Pubkey) -> Result<Pubkey> {
