@@ -39,11 +39,11 @@ pub const DEFAULT_PRIORITY_FEE: u64 = 50_000;
 /// There are 10^6 micro-lamports in one lamport. 2_500_000 micro lamport is => 2_500_000 / 1_000_000 = 2.5 Lamports
 /// The total fees will be: fees = compute budget * U = 200,000 * 2.5 = 500,000 lamport or 0.0005 SOL.
 /// This is 100 higher than the default fee which is 0.000005 SOL
-pub async fn create_priority_fee_ix(create_priority_fee_ix: &str) -> Instruction {
+pub async fn create_priority_fee_ix(priority_fee_rpc: &str) -> Instruction {
   let client = Client::new();
 
   let response = client
-  .post(create_priority_fee_ix)
+  .post(priority_fee_rpc)
   .json(&Body {
     jsonrpc: "2.0",
     id: 1,
