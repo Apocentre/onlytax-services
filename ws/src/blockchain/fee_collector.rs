@@ -2,7 +2,7 @@ use std::{pin::Pin, sync::Arc};
 use async_stream::try_stream;
 use futures::Stream;
 use eyre::Result;
-use log::info;
+use log::{error, info};
 use solana_client::{
   nonblocking::rpc_client::RpcClient, rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
   rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType}
@@ -23,9 +23,11 @@ use spl_token_2022::{
   instruction::transfer_checked, state::Mint,
 };
 
-use crate::{blockchain::priority_fee::create_priority_fee_ix, utils::config::{SolanaKeypair, SolanaPubkey}};
+use crate::utils::config::{SolanaKeypair, SolanaPubkey};
+use super::helius::helius_api::HeliusApi;
 
-use super::priority_fee::DEFAULT_PRIORITY_FEE;
+
+const DEFAULT_PRIORITY_FEE: u64 = 50_000;
 
 struct WithheldAccount {
   account: Pubkey,
@@ -37,7 +39,7 @@ pub struct FeeCollector {
   operator_keypair: SolanaKeypair,
   treasury: SolanaPubkey,
   protocol_fee_bps: u64,
-  priority_fee_rpc: String,
+  helius_api: Arc<HeliusApi>,
 }
 
 // We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
@@ -51,13 +53,14 @@ impl FeeCollector {
     operator_keypair: SolanaKeypair,
     treasury: SolanaPubkey,
     protocol_fee_bps: u64,
+    helius_api: Arc<HeliusApi>,
   ) -> Self {
     Self {
       rpc_client,
       operator_keypair,
       treasury,
       protocol_fee_bps,
-      priority_fee_rpc,
+      helius_api,
     }
   }
 
@@ -208,8 +211,17 @@ impl FeeCollector {
       &spl_token_2022::ID,
     );
 
+    let priority_fee = self.helius_api.fetch_priority_fee().await;
+    let priority_fee = match priority_fee {
+      Ok(response) => response.priority_fee_levels.high,
+      Err(err) =>  {
+        error!("Failed to get priority. Will use the default value {}: {}", DEFAULT_PRIORITY_FEE, err);
+        DEFAULT_PRIORITY_FEE
+      }
+    };
+
     let message = Message::new(
-      &[create_priority_fee_ix(&self.priority_fee_rpc).await, ix],
+      &[ComputeBudgetInstruction::set_compute_unit_price(priority_fee), ix],
       Some(&operator_pubkey)
     );
     let tx = Transaction::new(

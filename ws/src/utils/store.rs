@@ -26,6 +26,7 @@ impl Store {
       config.operator_keypair.clone(),
       config.treasury,
       config.protocol_fee_bps,
+      Arc::clone(&helius_api),
     ));
 
     let pg_pool = ConnectionPool::new(&config.postgres_uri).await;
