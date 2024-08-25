@@ -7,6 +7,8 @@ use solana_sdk::{pubkey::Pubkey, signature::Keypair};
 pub struct Config {
   #[envconfig(from = "PORT")]
   pub port: u64,
+  #[envconfig(from = "POSTGRES_URI")]
+  pub postgres_uri: String,
   #[envconfig(from = "SOLANA_RPC")]
   pub solana_rpc: String,
   #[envconfig(from = "PRIORITY_FEE_RPC")]
@@ -17,6 +19,8 @@ pub struct Config {
   pub treasury: SolanaPubkey,
   #[envconfig(from = "PROTOCOL_FEE_BPS")]
   pub protocol_fee_bps: u64,
+  #[envconfig(from = "JWT_HMAC_KEY")]
+  pub jwt_hmac_key: String,
 }
 
 pub struct SolanaKeypair(Keypair);

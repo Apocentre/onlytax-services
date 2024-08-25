@@ -18,6 +18,8 @@ socketioxide = { version = "0.14.0", features = ["state", "extensions"] }
 tokio = { version = "1.39.2", features = ["rt-multi-thread", "macros"] }
 tower = "0.5.0"
 tower-http = { version = "0.5.2", features = ["cors", "fs"] }
+onlytax-storage = { path = "../storage" }
+onlytax-api = { path = "../api" }
 solana-account-decoder = "2.0.5"
 solana-client = "2.0.5"
 solana-sdk = "2.0.5"
