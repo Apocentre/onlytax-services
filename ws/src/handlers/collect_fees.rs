@@ -19,6 +19,9 @@ pub async fn exec(
   mint: &str,
   withdraw_withheld_authority: &str,
 ) -> Result<()> {
+  let mut postgres = store.pg_pool.connection().await?;
+  postgres.upsert_token(mint).await?;
+
   let room = format!("{}-{}", mint, withdraw_withheld_authority);
   let mint = Pubkey::from_str(mint)?;
   let withdraw_withheld_authority_key = Pubkey::from_str(withdraw_withheld_authority)?;
