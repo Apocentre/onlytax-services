@@ -1,12 +1,15 @@
 use std::{
-  env, io::Result, panic, process, rc::Rc,
+  env, io::Result, panic, process, rc::Rc, sync::Arc,
 };
 use actix_cors::Cors;
 use actix_web::{middleware, web, http, App, HttpResponse, HttpServer};
 use env_logger::Env;
 use onlytax_api::{
-  endpoints::accounts::config::config as AccountsConfig,
-  middlewares::ec_auth::EcAuthnMiddlewareFactory,
+  endpoints::{
+    accounts::config::config as AccountsConfig,
+    priority_fee::config::config as PriorityFeeConfig,
+  },
+  middlewares::{ec_auth::EcAuthnMiddlewareFactory, jwt_auth::JwtAuthnMiddlewareFactory},
   utils::store::Store,
 };
 
@@ -31,7 +34,7 @@ async fn main() -> Result<()> {
   
   HttpServer::new(move || {
     let ec_authn_middleware = Rc::new(EcAuthnMiddlewareFactory{});
-    // let jwt_authn_middleware = Rc::new(JwtAuthnMiddlewareFactory::new(Arc::clone(&store.auth)));
+    let jwt_authn_middleware = Rc::new(JwtAuthnMiddlewareFactory::new(Arc::clone(&store.auth)));
     let cors_origin = cors_origin.clone();
 
     let cors = Cors::default()
@@ -49,6 +52,7 @@ async fn main() -> Result<()> {
       .wrap(cors)
       .wrap(middleware::Logger::default())
       .service(web::scope("/accounts").configure(AccountsConfig(Rc::clone(&ec_authn_middleware))))
+      .service(web::scope("/priority-fees").configure(PriorityFeeConfig(Rc::clone(&jwt_authn_middleware))))
       .route("/", web::get().to(|| HttpResponse::Ok()))
   })
   .bind(format!("0.0.0.0:{}", port.unwrap()))?

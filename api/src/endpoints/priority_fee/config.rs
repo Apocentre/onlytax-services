@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use actix_web::web;
 use crate::middlewares::jwt_auth::JwtAuthnMiddlewareFactory;
-use super::get_priority_fee
+use super::get_priority_fee;
 
 pub fn config(jwt_authn_middleware: Rc<JwtAuthnMiddlewareFactory>) -> impl FnOnce(&mut web::ServiceConfig) {
   move |cfg: &mut web::ServiceConfig| {
