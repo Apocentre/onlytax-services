@@ -7,11 +7,11 @@ impl PostgresConnection {
   pub async fn upsert_collect_transaction(&mut self, data: NewCollectTransaction<'_>) -> Result<()> {
     let query = sql_query(
       "
-      INSERT INTO tokens (
+      INSERT INTO collect_transactions (
         withdraw_withheld_authority, token, batch_size, tx_signature
       )
       VALUES($1, $2, $3, $4)
-      ON CONFLICT (address) DO NOTHING
+      ON CONFLICT (tx_signature) DO NOTHING
       "
     )
     .bind::<VarChar, _>(data.withdraw_withheld_authority)

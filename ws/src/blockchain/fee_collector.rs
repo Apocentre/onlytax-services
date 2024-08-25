@@ -135,7 +135,7 @@ impl FeeCollector {
           offset: 0,
           length: TOKEN_ACCOUNT_SIZE as usize,
       }),
-        commitment: Some(CommitmentConfig::processed()),
+        commitment: Some(CommitmentConfig::confirmed()),
         min_context_slot: Some(slot),
       },
       with_context: Some(true),
