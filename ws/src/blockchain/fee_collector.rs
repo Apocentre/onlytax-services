@@ -51,7 +51,6 @@ impl FeeCollector {
     operator_keypair: SolanaKeypair,
     treasury: SolanaPubkey,
     protocol_fee_bps: u64,
-    priority_fee_rpc: String,
   ) -> Self {
     Self {
       rpc_client,

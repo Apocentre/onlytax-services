@@ -11,10 +11,8 @@ pub struct Config {
   pub postgres_uri: String,
   #[envconfig(from = "SOLANA_RPC")]
   pub solana_rpc: String,
-  #[envconfig(from = "PRIORITY_FEE_RPC")]
-  pub priority_fee_rpc: String,
-  #[envconfig(nested = true)]
-  pub helius: HeliusConfig,
+  #[envconfig(from = "HELIUS_API")]
+  pub helius_api: String,
   #[envconfig(from = "OPERATOR_PRIV_KEY")]
   pub operator_keypair: SolanaKeypair,
   #[envconfig(from = "TREASURY")]
@@ -70,12 +68,3 @@ impl Deref for SolanaPubkey {
     &self.0
   }
 }
-
-#[derive(Envconfig)]
-pub struct HeliusConfig {
-  #[envconfig(from = "HELIUS_API")]
-  pub api: String,
-  #[envconfig(from = "HELIUS_API_KEY")]
-  pub api_key: String,
-}
-
