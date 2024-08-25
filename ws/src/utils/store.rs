@@ -3,7 +3,8 @@ use envconfig::Envconfig;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use onlytax_api::services::auth::Auth;
 use onlytax_storage::connection_pool::ConnectionPool;
-use crate::blockchain::{fee_collector::FeeCollector, helius::helius_api::HeliusApi};
+use onlytax_blockchain::helius::helius_api::HeliusApi;
+use crate::blockchain::fee_collector::FeeCollector;
 
 use super::config::Config;
 
@@ -20,13 +21,13 @@ impl Store {
   pub async fn new() -> Self {
     let config = Config::init_from_env().unwrap();
     let rpc_client = Arc::new(RpcClient::new(config.solana_rpc.clone()));
-    let helius_api = Arc::new(HeliusApi::new(config.helius.api.clone(), config.helius.api_key.clone()));
+    let helius_api = Arc::new(HeliusApi::new(config.helius_api.clone()));
     let fee_collector = Arc::new(FeeCollector::new(
       Arc::clone(&rpc_client),
       config.operator_keypair.clone(),
       config.treasury,
       config.protocol_fee_bps,
-      config.priority_fee_rpc.clone(),
+      Arc::clone(&helius_api),
     ));
 
     let pg_pool = ConnectionPool::new(&config.postgres_uri).await;

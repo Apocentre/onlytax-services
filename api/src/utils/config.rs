@@ -11,6 +11,8 @@ pub struct Config {
   pub cors_config: CorsConfig,
   #[envconfig(from = "JWT_HMAC_KEY")]
   pub jwt_hmac_key: String,
+  #[envconfig(from = "HELIUS_API")]
+  pub helius_api: String,
 }
 
 pub struct CorsConfig {

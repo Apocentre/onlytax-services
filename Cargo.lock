@@ -3133,11 +3133,22 @@ dependencies = [
  "hex",
  "jsonwebtoken",
  "log",
+ "onlytax-blockchain",
  "onlytax-storage",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "onlytax-blockchain"
+version = "0.1.0"
+dependencies = [
+ "eyre",
+ "log",
+ "reqwest 0.12.7",
+ "serde",
 ]
 
 [[package]]
@@ -3174,11 +3185,11 @@ dependencies = [
  "futures",
  "log",
  "onlytax-api",
+ "onlytax-blockchain",
  "onlytax-storage",
  "reqwest 0.12.7",
  "serde",
  "socketioxide",
- "solana-account-decoder",
  "solana-client",
  "solana-sdk",
  "spl-associated-token-account",

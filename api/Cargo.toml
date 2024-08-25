@@ -9,6 +9,7 @@ actix-web = "4.3"
 actix-cors = "0.7"
 dotenv = "0.15"
 onlytax-storage = { path = "../storage" }
+onlytax-blockchain = { path = "../blockchain" }
 eyre = "0.6.8"
 env_logger = "0.11"
 futures-util = "0.3.21"
