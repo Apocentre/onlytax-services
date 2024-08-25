@@ -19,7 +19,7 @@ pub async fn exec(
   mint: &str,
   withdraw_withheld_authority: &str,
 ) -> Result<()> {
-  let room = withdraw_withheld_authority.to_string();
+  let room = format!("{}-{}", mint, withdraw_withheld_authority);
   let mint = Pubkey::from_str(mint)?;
   let withdraw_withheld_authority_key = Pubkey::from_str(withdraw_withheld_authority)?;
   let mut stream = store.fee_collector.collect(&mint, &withdraw_withheld_authority_key);
