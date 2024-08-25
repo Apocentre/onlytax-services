@@ -10,7 +10,8 @@ use crate::utils::store::Store;
 #[derive(Serialize)]
 struct Response {
   tx: Option<Vec<u8>>,
-  count: usize,
+  batch_size: usize,
+  batch_count: usize,
 }
 
 pub async fn exec(
@@ -28,14 +29,24 @@ pub async fn exec(
   let mut stream = store.fee_collector.collect(&mint, &withdraw_withheld_authority_key);
 
   while let Some(Ok(item)) = stream.next().await {
-    if let Err(err) = socket.emit(room.clone(), Response {tx: Some(item.0), count: item.1}) {
+    let response = Response {
+      tx: Some(item.0),
+      batch_size: item.1,
+      batch_count: item.2,
+    };
+    if let Err(err) = socket.emit(room.clone(), response) {
       error!("failed to push new_batch for authority {} {}", withdraw_withheld_authority, err);
     }
   }
 
   // This msg will indicate the end of the stream. Usefull for WS clients to know when
   // the transactions are all consumed
-  if let Err(err) = socket.emit(room.clone(), Response {tx: None, count: 0}) {
+  let response = Response {
+    tx: None,
+    batch_size: 0,
+    batch_count: 0,
+  };
+  if let Err(err) = socket.emit(room.clone(), response) {
     error!("failed to push batch-complete for authority {} {}", withdraw_withheld_authority, err);
   }
 

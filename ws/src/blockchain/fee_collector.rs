@@ -66,7 +66,7 @@ impl FeeCollector {
     &'a self,
     mint: &'b Pubkey,
     withdraw_withheld_authority: &'b Pubkey,
-  ) -> Pin<Box<dyn Stream<Item = Result<(Vec<u8>, usize)>> + Send + 'a>> {
+  ) -> Pin<Box<dyn Stream<Item = Result<(Vec<u8>, usize, usize)>> + Send + 'a>> {
     let stream = try_stream! {
       let mint_account = Mint::unpack_from_slice(
         &self.rpc_client.get_account_data(mint).await?,
@@ -115,7 +115,7 @@ impl FeeCollector {
         );
         let tx = bincode::serialize(&Transaction::new_unsigned(message))?;
       
-        yield (tx, withheld_token_accounts_len)
+        yield (tx, ACCOUNT_BATCH_SIZE, withheld_token_accounts_len)
       }
     };
 

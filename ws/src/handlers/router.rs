@@ -22,7 +22,7 @@ pub fn register_handlers(io: Arc<SocketIo>) {
       }
     });
 
-    s.on("collect-transaction", |_: SocketRef, Data::<save_collect_tx::Request>(request)| async move {
+    s.on("save-collect-tx", |_: SocketRef, Data::<save_collect_tx::Request>(request)| async move {
       let token = request.token.clone();
       let withdraw_withheld_authority = request.withdraw_withheld_authority.clone();
 
