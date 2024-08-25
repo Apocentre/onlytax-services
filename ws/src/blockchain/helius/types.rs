@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Body<'a> {
   pub jsonrpc: &'a str,
-  pub id: &'a str,
+  pub id: u8,
   pub method: &'a str,
   pub params: TokenAccountParam<'a>,
 }

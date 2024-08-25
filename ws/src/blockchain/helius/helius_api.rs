@@ -39,7 +39,7 @@ impl HeliusApi {
     .post(&self.api)
     .json(&Body {
       jsonrpc: "2.0",
-      id: "helius-test",
+      id: 1,
       method: "getTokenAccounts",
       params: TokenAccountParam {
         mint,
