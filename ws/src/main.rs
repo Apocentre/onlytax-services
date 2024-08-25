@@ -35,7 +35,8 @@ async fn main() -> Result<()> {
 
   register_handlers(Arc::clone(&io));
 
-  store.helius_api.fetch_token_accounts("Ex7QKTHsGHMkVtYg8tgi48Wyw1XrH8hM4dp6B8SGenVz").await?;
+  let result = store.helius_api.fetch_token_accounts("Ex7QKTHsGHMkVtYg8tgi48Wyw1XrH8hM4dp6B8SGenVz").await?;
+  println!("{:?}", result);
 
   async fn get_root() -> &'static str { "Hi!" }
 
