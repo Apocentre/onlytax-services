@@ -1,7 +1,10 @@
 use log::info;
 use reqwest::Client;
 use eyre::Result;
-use super::types::{Body, TokenAccountParam, Response, TokenAccountResponse};
+use super::types::{
+  Body, TokenAccountParam, Response, TokenAccountResponse,
+  PriorityParam, PriorityOption, PriorityFeeResponse,
+};
 
 pub struct HeliusApi {
   pub api: String,
@@ -29,6 +32,30 @@ impl HeliusApi {
     }
   
     Ok(result)
+  }
+
+  pub async fn fetch_priority_fee(&self) -> Result<PriorityFeeResponse> {
+    info!("sending getPriorityFeeEstimate");
+
+    let client = Client::new();
+    let response = client
+    .post(&self.api)
+    .json(&Body {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getPriorityFeeEstimate",
+      params: PriorityParam {
+        options: PriorityOption {
+          include_all_priority_fee_levels: true,
+          lookback_slots: 100,
+        }
+      },
+    })
+    .send().await?;
+
+    let Response::<PriorityFeeResponse> {result: response} = response.json().await?;
+
+    Ok(response)
   }
 
   async fn send_fetch_token_accounts(&self, mint: &str, page: u32) -> Result<TokenAccountResponse> {

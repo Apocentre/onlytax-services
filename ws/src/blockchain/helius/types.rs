@@ -2,11 +2,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Body<'a> {
+pub struct Body<'a, P> {
   pub jsonrpc: &'a str,
   pub id: u8,
   pub method: &'a str,
-  pub params: TokenAccountParam<'a>,
+  pub params: P,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -39,10 +39,39 @@ pub struct TokenAccount {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenExtensions {
-  transfer_fee_amount: TransferFeeAmount,
+  pub transfer_fee_amount: TransferFeeAmount,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TransferFeeAmount {
-  withheld_amount: u64,
+ pub withheld_amount: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PriorityParam {
+  pub options: PriorityOption,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PriorityOption {
+  pub include_all_priority_fee_levels: bool,
+  pub lookback_slots: u8,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PriorityFeeResponse {
+  pub priority_fee_levels: PriorityFeeLevel,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PriorityFeeLevel {
+  pub min: u64,
+  pub low: u64,
+  pub medium: u64,
+  pub high: u64,
+  pub very_high: u64,
+  pub veryunsafe_max_high: u64,
 }
