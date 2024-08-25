@@ -5,10 +5,14 @@ use serde::{Deserialize, Serialize};
 use chrono::{
   naive::serde::ts_milliseconds::serialize as to_milli_ts, NaiveDateTime,
 };
+use crate::schema::collect_transactions;
 
 
 #[derive(Queryable, QueryableByName, Serialize, Debug)]
+#[diesel(table_name = collect_transactions)]
 pub struct CollectTransaction {
+  pub id: i32,
+
   #[diesel(sql_type = VarChar)]
   pub withdraw_withheld_authority: String,
 

@@ -7,13 +7,16 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE tokens (
-  address VARCHAR(44) PRIMARY KEY,
+  address VARCHAR(44) PRIMARY KEY
 );
 
 CREATE TABLE collect_transactions (
+  id SERIAL PRIMARY KEY,
   withdraw_withheld_authority VARCHAR(44) NOT NULL REFERENCES accounts(address),
   token VARCHAR(44) NOT NULL REFERENCES tokens(address),
-  batch_size INT NOT NULL DEFAULT FALSE,
+  batch_size INT NOT NULL,
   tx_signature VARCHAR,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
+  UNIQUE(tx_signature)
 );
