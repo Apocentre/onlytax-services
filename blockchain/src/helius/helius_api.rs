@@ -42,12 +42,12 @@ impl HeliusApi {
       jsonrpc: "2.0",
       id: 1,
       method: "getPriorityFeeEstimate",
-      params: PriorityParam {
+      params: vec![PriorityParam {
         options: PriorityOption {
           include_all_priority_fee_levels: true,
           lookback_slots: 100,
         }
-      },
+      }],
     })
     .send().await?;
 

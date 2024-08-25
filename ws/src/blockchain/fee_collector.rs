@@ -33,7 +33,7 @@ pub struct FeeCollector {
   helius_api: Arc<HeliusApi>,
 }
 
-const ACCOUNT_BATCH_SIZE: usize = 1;
+const ACCOUNT_BATCH_SIZE: usize = 10;
 
 impl FeeCollector {
   pub fn new(
@@ -163,7 +163,7 @@ impl FeeCollector {
 
     let priority_fee = self.helius_api.fetch_priority_fee().await;
     let priority_fee = match priority_fee {
-      Ok(response) => response.priority_fee_levels.high,
+      Ok(response) => response.priority_fee_levels.high as u64,
       Err(err) =>  {
         error!("Failed to get priority. Will use the default value {}: {}", DEFAULT_PRIORITY_FEE, err);
         DEFAULT_PRIORITY_FEE

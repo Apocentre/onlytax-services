@@ -68,10 +68,10 @@ pub struct PriorityFeeResponse {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PriorityFeeLevel {
-  pub min: u64,
-  pub low: u64,
-  pub medium: u64,
-  pub high: u64,
-  pub very_high: u64,
-  pub veryunsafe_max_high: u64,
+  pub min: f64,
+  pub low: f64,
+  pub medium: f64,
+  pub high: f64,
+  pub very_high: f64,
+  pub unsafe_max: f64,
 }
