@@ -3,14 +3,7 @@ use async_stream::try_stream;
 use futures::Stream;
 use eyre::Result;
 use log::{error, info};
-use solana_client::{
-  nonblocking::rpc_client::RpcClient, rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
-  rpc_filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType}
-};
-use solana_account_decoder::{
-  parse_account_data::SplTokenAdditionalData, parse_token::{parse_token_v2, TokenAccountType},
-  parse_token_extension::UiExtension, UiAccountEncoding, UiDataSliceConfig,
-};
+use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
   commitment_config::CommitmentConfig, compute_budget::ComputeBudgetInstruction, message::Message,
   program_pack::Pack, pubkey::Pubkey, signer::Signer, transaction::Transaction,
@@ -42,9 +35,6 @@ pub struct FeeCollector {
   helius_api: Arc<HeliusApi>,
 }
 
-// We're using transfer fee extentions so the token acount is not the classic 165 bytes account.
-// TODO: find a better way to find the correct size of the token size
-const TOKEN_ACCOUNT_SIZE: u64 = 346;
 const ACCOUNT_BATCH_SIZE: usize = 1;
 
 impl FeeCollector {
@@ -75,7 +65,7 @@ impl FeeCollector {
       )?;
 
       let protocol_ata = self.create_protocol_ata(mint).await?;
-      let withheld_token_accounts = self.get_withheld_token_accounts(mint, mint_account.decimals).await?;
+      let withheld_token_accounts = self.get_withheld_token_accounts(mint).await?;
       let withheld_token_accounts_len = withheld_token_accounts.len();
 
       // Send tokens to the withdraw_withheld ascosciated token. In the future we will allow

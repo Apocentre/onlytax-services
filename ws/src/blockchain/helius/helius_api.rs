@@ -10,7 +10,7 @@ pub struct HeliusApi {
 }
 
 impl HeliusApi {
-  const PAGINATION_LIMIT: u32 = 1;
+  const PAGINATION_LIMIT: u32 = 1_000;
 
   pub fn new(api: String) -> Self {
     Self {api}
@@ -49,7 +49,7 @@ impl HeliusApi {
         }
       },
     })
-    .send().await;
+    .send().await?;
 
     let Response::<PriorityFeeResponse> {result: response} = response.json().await?;
 
