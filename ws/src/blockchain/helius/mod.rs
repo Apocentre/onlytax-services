@@ -1,2 +1,2 @@
-pub mod token_account;
+pub mod helius_api;
 pub mod types;

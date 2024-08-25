@@ -12,8 +12,8 @@ pub struct Body<'a> {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenAccountParam<'a> {
   pub mint: &'a str,
-  pub page: u16,
-  pub limit: u16,
+  pub page: u32,
+  pub limit: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,8 +24,8 @@ pub struct Response<T> {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenAccountResponse {
   pub total: u32,
-  pub limit: u16,
-  pub page: u16,
+  pub limit: u32,
+  pub page: u32,
   pub token_accounts: Vec<TokenAccount>,
 }
 
