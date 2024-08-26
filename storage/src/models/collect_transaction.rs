@@ -20,7 +20,7 @@ pub struct CollectTransaction {
   pub token: String,
 
   #[diesel(sql_type = Int4)]
-  pub batch_size: i32,
+  pub batch_count: i32,
 
   #[diesel(sql_type = VarChar)]
   pub tx_signature: String,
@@ -35,6 +35,6 @@ pub struct CollectTransaction {
 pub struct NewCollectTransaction<'a> {
   pub withdraw_withheld_authority: &'a str,
   pub token: &'a str,
-  pub batch_size: i32,
+  pub batch_count: i32,
   pub tx_signature: &'a str,
 }

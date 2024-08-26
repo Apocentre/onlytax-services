@@ -8,7 +8,7 @@ impl PostgresConnection {
     let query = sql_query(
       "
       INSERT INTO collect_transactions (
-        withdraw_withheld_authority, token, batch_size, tx_signature
+        withdraw_withheld_authority, token, batch_count, tx_signature
       )
       VALUES($1, $2, $3, $4)
       ON CONFLICT (tx_signature) DO NOTHING
@@ -16,7 +16,7 @@ impl PostgresConnection {
     )
     .bind::<VarChar, _>(data.withdraw_withheld_authority)
     .bind::<VarChar, _>(data.token)
-    .bind::<Int4, _>(data.batch_size)
+    .bind::<Int4, _>(data.batch_count)
     .bind::<VarChar, _>(data.tx_signature);
 
     query.execute(self.borrow_mut()).await?;

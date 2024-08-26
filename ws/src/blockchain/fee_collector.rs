@@ -33,7 +33,7 @@ pub struct FeeCollector {
   helius_api: Arc<HeliusApi>,
 }
 
-const ACCOUNT_BATCH_SIZE: usize = 10;
+const ACCOUNT_BATCH_SIZE: usize = 25;
 
 impl FeeCollector {
   pub fn new(

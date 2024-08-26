@@ -16,7 +16,7 @@ diesel::table! {
         withdraw_withheld_authority -> Varchar,
         #[max_length = 44]
         token -> Varchar,
-        batch_size -> Int4,
+        batch_count -> Int4,
         tx_signature -> Nullable<Varchar>,
         created_at -> Nullable<Timestamptz>,
     }

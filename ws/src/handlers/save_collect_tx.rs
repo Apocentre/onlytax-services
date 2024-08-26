@@ -10,7 +10,7 @@ pub struct Request {
   pub access_token: String,
   pub withdraw_withheld_authority: String,
   pub token: String,
-  pub batch_size: i32,
+  pub batch_count: i32,
   pub tx_signature: String,
 }
 
@@ -22,7 +22,7 @@ pub async fn exec(
   postgres.upsert_collect_transaction(NewCollectTransaction {
     withdraw_withheld_authority: &request.withdraw_withheld_authority,
     token: &request.token,
-    batch_size: request.batch_size,
+    batch_count: request.batch_count,
     tx_signature: &request.tx_signature,
   }).await?;
 
