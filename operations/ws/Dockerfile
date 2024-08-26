@@ -3,9 +3,9 @@ FROM rust:bookworm as builder
 ARG GITHUB_TOKEN
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
-RUN USER=root cargo new --bin onlytax-api-dist
-COPY ./ ./onlytax-api-dist
-WORKDIR /onlytax-api-dist
+RUN USER=root cargo new --bin onlytax-ws-dist
+COPY ./ ./onlytax-ws-dist
+WORKDIR /onlytax-ws-dist
 
 RUN apt-get update \
     && apt-get install -y protobuf-compiler libclang-dev clang \
@@ -23,7 +23,7 @@ RUN groupadd $APP_USER \
   && useradd -g $APP_USER $APP_USER \
   && mkdir -p ${APP}
 
-COPY --from=builder /onlytax-api-dist/target/release/onlytax-api ${APP}/onlytax-api
+COPY --from=builder /onlytax-ws-dist/target/release/onlytax-ws ${APP}/onlytax-ws
 
 RUN apt-get update \
     && apt-get install -y ca-certificates tzdata openssl libpq5 \
@@ -34,4 +34,4 @@ USER $APP_USER
 WORKDIR ${APP}
 
 ENV ENV=production
-CMD ["./onlytax-api"]
+CMD ["./onlytax-ws"]
