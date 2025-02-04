@@ -52,10 +52,10 @@ impl FeeCollector {
     }
   }
 
-  pub fn collect<'a, 'b: 'a>(
+  pub fn collect<'a>(
     &'a self,
-    mint: &'b Pubkey,
-    withdraw_withheld_authority: &'b Pubkey,
+    mint: &'a Pubkey,
+    withdraw_withheld_authority: &'a Pubkey,
   ) -> Pin<Box<dyn Stream<Item = Result<(Vec<u8>, usize, usize)>> + Send + 'a>> {
     let stream = try_stream! {
       let mint_account = Mint::unpack_from_slice(
