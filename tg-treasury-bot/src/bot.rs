@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 use log::error;
 use teloxide::{prelude::*, types::{LinkPreviewOptions, ParseMode}, utils::command::BotCommands};
 use tokio::time;
-use crate::utils::store::Store;
+use crate::{jupiter::Jupiter, message::format_message, utils::store::Store};
 
 #[derive(BotCommands, Clone)]
 #[command(rename_rule = "lowercase", description = "These commands are supported:")]
@@ -17,15 +17,20 @@ enum Command {
 
 pub struct TreasuryBot {
   store: Arc<Store>,
+  bot: Bot,
 }
 
 impl TreasuryBot {
   pub fn new(store: Arc<Store>) -> Self {
-    Self {store}
+    let bot = Bot::new(store.config.teloxide_token.clone());
+
+    Self {
+      store,
+      bot,
+    }
   }
 
   pub async fn start(&self) {
-    let bot = Bot::new(self.store.config.teloxide_token.clone());
     let store = Arc::clone(&self.store);
 
     let handler = move |bot: Bot, msg: Message, cmd: Command| {
@@ -35,13 +40,15 @@ impl TreasuryBot {
 
     self.poll_token_account();
 
-    Command::repl(bot, handler).await;
+    Command::repl(self.bot.clone(), handler).await;
   }
 
   fn poll_token_account(&self) {
     let store = Arc::clone(&self.store);
     let poll_interval_secs = store.config.poll_interval_secs;
+    let slippage_bps = store.config.slippage_bps;
     let treasury = store.config.treasury.clone();
+    let bot = self.bot.clone();
 
     tokio::spawn(async move {
       let mut interval = time::interval(Duration::from_secs(poll_interval_secs));
@@ -58,7 +65,32 @@ impl TreasuryBot {
           continue;
         };
 
-        println!("Token Accounts {:?}", token_accounts);
+        let mut quotes = Vec::with_capacity(token_accounts.len());
+
+        for ta in &token_accounts {
+          let Ok(quote) = Jupiter::quote(&ta.mint, ta.amount, slippage_bps).await.inspect_err(|err| {
+            error!("Error fetching quote for {} {:?}", ta.address, err);
+          }) else {
+            continue;
+          };
+
+          quotes.push(quote);
+        }
+
+        let message = if !token_accounts.is_empty() {
+          format_message(quotes)
+        } else {
+          continue;
+        };
+
+        let link_preview_options = serde_json::from_str::<LinkPreviewOptions>(r#"{"is_disabled": true}"#).unwrap();
+        let chat_id = ChatId(store.storage.chat_id());
+
+        if let Err(err) = bot.send_message(chat_id, &message)
+        .parse_mode(ParseMode::Html)
+        .link_preview_options(link_preview_options.clone()).await {
+          error!("Could not send new trade to chat {}: {}", chat_id, err);
+        }
       }
     });
   }

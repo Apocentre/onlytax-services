@@ -10,4 +10,6 @@ pub struct Config {
   pub poll_interval_secs: u64,
   #[envconfig(from = "TREASURY")]
   pub treasury: String,
+  #[envconfig(from = "SLIPPAGE_BPS")]
+  pub slippage_bps: u64,
 }

@@ -33,6 +33,7 @@ pub struct TokenAccountResponse {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenAccount {
   pub address: String,
+  pub mint: String,
   pub owner: String,
   pub amount: u64,
   pub token_extensions: Option<TokenExtensions>,
