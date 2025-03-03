@@ -5,6 +5,7 @@ use eyre::Result;
 use socketioxide::{SocketIo, TransportType};
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
+use rustls::crypto::ring;
 use onlytax_ws::{
   handlers::router::register_handlers, utils::store::Store
 };
@@ -21,6 +22,7 @@ async fn main() -> Result<()> {
     dotenv::from_filename(".env").expect("cannot load env from a file");
   }
 
+  ring::default_provider().install_default().expect("Failed to install rustls crypto provider");
   env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
   
   let store = Arc::new(Store::new().await);

@@ -3558,6 +3558,7 @@ dependencies = [
  "onlytax-blockchain",
  "onlytax-storage",
  "reqwest 0.12.7",
+ "rustls 0.23.23",
  "serde",
  "socketioxide",
  "solana-client",
