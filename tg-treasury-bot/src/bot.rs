@@ -1,5 +1,6 @@
 use std::{sync::Arc, time::Duration};
 use log::error;
+use solana_sdk::native_token::LAMPORTS_PER_SOL;
 use teloxide::{prelude::*, types::{LinkPreviewOptions, ParseMode}, utils::command::BotCommands};
 use tokio::time;
 use crate::{jupiter::Jupiter, message::format_message, utils::store::Store};
@@ -77,6 +78,8 @@ impl TreasuryBot {
           quotes.push(quote);
         }
 
+        // keep quotes that are larger than 1 SOL
+        let mut quotes = quotes.into_iter().filter(|q| q.out_amount >= LAMPORTS_PER_SOL).collect::<Vec<_>>();
         quotes.sort_by(|a, b| b.out_amount.cmp(&a.out_amount));
 
         let messages = if !token_accounts.is_empty() {
@@ -90,7 +93,7 @@ impl TreasuryBot {
 
         for message in messages {
           if let Err(err) = bot.send_message(chat_id, &message)
-            .parse_mode(ParseMode::Html)
+            .parse_mode(ParseMode::MarkdownV2)
             .link_preview_options(link_preview_options.clone()).await 
           {
             error!("Could not send new trade to chat {}: {}", chat_id, err);

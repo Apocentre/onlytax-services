@@ -1,11 +1,7 @@
 use jup_ag::Quote;
+use solana_sdk::native_token::lamports_to_sol;
 
-const LAMPORTS_PER_SOL: f64 = 1_000_000_000.0;
-const CHUNK_SIZE: usize = 25;
-
-pub fn lamports_to_sol(lamports: u64) -> f64 {
-  lamports as f64 / LAMPORTS_PER_SOL
-}
+const CHUNK_SIZE: usize = 10;
 
 pub fn format_message(quotes: Vec<Quote>) -> Vec<String> {
   let chunks = quotes.chunks(CHUNK_SIZE);
@@ -14,25 +10,23 @@ pub fn format_message(quotes: Vec<Quote>) -> Vec<String> {
   for chunk in chunks {
     let mut rows = Vec::with_capacity(quotes.len());
 
-    for (i, quote) in chunk.iter().enumerate() {
-      let token = format!("[🔗](https://solscan.io/token/{})", quote.input_mint);
-      let sol_amount = lamports_to_sol(quote.out_amount);
-      let raydium_link = format!("[🔗](https://raydium.io/swap/?inputMint={:?}&outputMint=sol)", token);
+    for quote in chunk {
+      let token = format!("[Explorer](https://solscan.io/token/{})", quote.input_mint);
+      let sol_amount = lamports_to_sol(quote.out_amount).to_string().replace(".", "\\.");
+      let raydium_link = format!("[Swap](https://raydium.io/swap/?inputMint={}&outputMint=sol)", quote.input_mint);
 
       let row = format!(
-      r#"ª
-      {}. {} 
-        - {}
-        - {}
+      r#"
+      {} {} {}
 
       "#,
-      i, token, sol_amount, raydium_link
+      token, sol_amount, raydium_link
       );
 
       rows.push(row);
     }
 
-    let message = rows.into_iter().reduce(|body, row| body + &row + &"\n").unwrap();
+    let message = rows.into_iter().reduce(|body, row| body + &row).unwrap();
     messages.push(message);
   }
 
