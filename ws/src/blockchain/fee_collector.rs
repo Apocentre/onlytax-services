@@ -118,7 +118,12 @@ impl FeeCollector {
     let withheld_accounts = self.helius_api.fetch_token_accounts(&mint.to_string()).await?
     .iter()
     .filter_map(|ta| {
-      let withheld_amount = ta.token_extensions.transfer_fee_amount.withheld_amount;
+      let Some(token_extensions) = &ta.token_extensions else {
+        return None
+      };
+
+      let withheld_amount = token_extensions.transfer_fee_amount.withheld_amount;
+
       if withheld_amount == 0 {
         return None
       }

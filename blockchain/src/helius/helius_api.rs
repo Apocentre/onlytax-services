@@ -32,6 +32,25 @@ impl HeliusApi {
     Ok(result)
   }
 
+  pub async fn fetch_token_accounts_by_owner(&self, owner: &str) -> Result<Vec<TokenAccount>> {
+    let mut page = 1;
+    let mut response = self.send_fetch_token_accounts_by_owner(owner, page).await.map_err(|err| {
+      println!("Error {:?}", err);
+      err
+    })?;
+    let mut total = response.total;
+    let mut result = response.token_accounts;
+
+    while total > 0 {
+      page += 1;
+      response = self.send_fetch_token_accounts_by_owner(owner, page).await?;
+      total = response.total;
+      result.extend(response.token_accounts);
+    }
+  
+    Ok(result)
+  }
+
   pub async fn fetch_priority_fee(&self) -> Result<PriorityFeeResponse> {
     info!("sending getPriorityFeeEstimate");
 
@@ -67,10 +86,35 @@ impl HeliusApi {
       id: 1,
       method: "getTokenAccounts",
       params: TokenAccountParam {
-        mint,
+        mint: Some(mint),
+        owner: None,
         page,
         limit: Self::PAGINATION_LIMIT,
       },
+    })
+    .send().await?;
+
+    let Response::<TokenAccountResponse> {result: response} = response.json().await?;
+
+    Ok(response)
+  }
+
+  async fn send_fetch_token_accounts_by_owner(&self, owner: &str, page: u32) -> Result<TokenAccountResponse> {
+    info!("sending getTokenAccounts owned by {owner} to Helius for page {page}");
+
+    let client = Client::new();
+    let response = client
+    .post(&self.api)
+    .json(&Body {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getTokenAccounts",
+      params: TokenAccountParam {
+        mint: None,
+        owner: Some(owner),
+        page,
+        limit: Self::PAGINATION_LIMIT,
+      }
     })
     .send().await?;
 

@@ -2,7 +2,7 @@ use std::{sync::Arc, env, panic, process};
 use dotenv;
 use env_logger::Env;
 use eyre::Result;
-use tg_treasuty_bot::{bot::TreasuryBot, utils::store::Store};
+use tg_treasury_bot::{bot::TreasuryBot, utils::store::Store};
 
 #[tokio::main]
 async fn main() -> Result<()> {

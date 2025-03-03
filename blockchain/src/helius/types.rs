@@ -11,7 +11,8 @@ pub struct Body<'a, P> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenAccountParam<'a> {
-  pub mint: &'a str,
+  pub mint: Option<&'a str>,
+  pub owner: Option<&'a str>,
   pub page: u32,
   pub limit: u32,
 }
@@ -34,7 +35,7 @@ pub struct TokenAccount {
   pub address: String,
   pub owner: String,
   pub amount: u64,
-  pub token_extensions: TokenExtensions,
+  pub token_extensions: Option<TokenExtensions>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
