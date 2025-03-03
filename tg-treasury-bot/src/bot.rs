@@ -77,7 +77,9 @@ impl TreasuryBot {
           quotes.push(quote);
         }
 
-        let message = if !token_accounts.is_empty() {
+        quotes.sort_by(|a, b| b.out_amount.cmp(&a.out_amount));
+
+        let messages = if !token_accounts.is_empty() {
           format_message(quotes)
         } else {
           continue;
@@ -86,10 +88,13 @@ impl TreasuryBot {
         let link_preview_options = serde_json::from_str::<LinkPreviewOptions>(r#"{"is_disabled": true}"#).unwrap();
         let chat_id = ChatId(store.storage.chat_id());
 
-        if let Err(err) = bot.send_message(chat_id, &message)
-        .parse_mode(ParseMode::Html)
-        .link_preview_options(link_preview_options.clone()).await {
-          error!("Could not send new trade to chat {}: {}", chat_id, err);
+        for message in messages {
+          if let Err(err) = bot.send_message(chat_id, &message)
+            .parse_mode(ParseMode::Html)
+            .link_preview_options(link_preview_options.clone()).await 
+          {
+            error!("Could not send new trade to chat {}: {}", chat_id, err);
+          }
         }
       }
     });
@@ -100,6 +105,7 @@ impl TreasuryBot {
       Command::Help => bot.send_message(msg.chat.id, Command::descriptions().to_string()).await?,
       Command::Enable => {
         store.storage.enable();
+        store.storage.set_chat_id(msg.chat.id.0);
         bot.send_message(msg.chat.id, "Enabled!").await?
       },
       Command::Disable => {

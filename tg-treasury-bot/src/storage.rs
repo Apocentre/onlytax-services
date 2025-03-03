@@ -30,6 +30,6 @@ impl Storage {
   }
 
   pub fn chat_id(&self) -> i64 {
-    self.chat_id.load(Ordering::Relaxed)
+    self.chat_id.load( Ordering::Relaxed)
   }
 }

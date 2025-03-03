@@ -19,13 +19,12 @@ impl HeliusApi {
   pub async fn fetch_token_accounts(&self, mint: &str) -> Result<Vec<TokenAccount>> {
     let mut page = 1;
     let mut response = self.send_fetch_token_accounts(mint, page).await?;
-    let mut total = response.total;
+    let total = response.total;
     let mut result = response.token_accounts;
 
-    while total > 0 {
+    while total > page * Self::PAGINATION_LIMIT {
       page += 1;
       response = self.send_fetch_token_accounts(mint, page).await?;
-      total = response.total;
       result.extend(response.token_accounts);
     }
   
@@ -34,17 +33,13 @@ impl HeliusApi {
 
   pub async fn fetch_token_accounts_by_owner(&self, owner: &str) -> Result<Vec<TokenAccount>> {
     let mut page = 1;
-    let mut response = self.send_fetch_token_accounts_by_owner(owner, page).await.map_err(|err| {
-      println!("Error {:?}", err);
-      err
-    })?;
-    let mut total = response.total;
+    let mut response = self.send_fetch_token_accounts_by_owner(owner, page).await?;
+    let total = response.total;
     let mut result = response.token_accounts;
 
-    while total > 0 {
+    while total > page * Self::PAGINATION_LIMIT {
       page += 1;
       response = self.send_fetch_token_accounts_by_owner(owner, page).await?;
-      total = response.total;
       result.extend(response.token_accounts);
     }
   
