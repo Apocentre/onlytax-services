@@ -19,3 +19,6 @@ yarn.lock
 node_modules
 SECRETS.md
 .config.json
+
+cr_pat
+raleway_ghcr
